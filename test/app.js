@@ -15,7 +15,7 @@ couch
             });
 
             group.modules.forEach(function(module, index){
-                $moduleBox.append('<li id="module_' + sensor.id + '"><strong>' + group.name + ' -> ' + module.name + '</strong> <span class="value">' + module.options.value + '</span>');
+                $moduleBox.append('<li id="module_' + module.id + '"><strong>' + group.name + ' -> ' + module.name + '</strong> <span class="value">' + module.options.value + '</span>');
             });
 
         });
