@@ -2,6 +2,10 @@ var couch = new CouchSocketService('localhost', 8000);
 var $sensorBox = $('#sensors');
 var $moduleBox = $('#modules');
 
+var modules = {};
+var sensors = {};
+var groups = {};
+
 couch
     .on('SYNC', function(data) {
         if (!data.groups) {
@@ -15,20 +19,55 @@ couch
             });
 
             group.modules.forEach(function(module, index){
-                $moduleBox.append('<li id="module_' + module.id + '"><strong>' + group.name + ' -> ' + module.name + '</strong> <span class="value">' + module.options.value + '</span>');
+                modules[module.id] = module;
+                var $module = $('<li id="module_' + module.id + '"><strong>' + group.name + ' -> ' + module.name + '</strong> <span class="value">' + module.options.value + '</span>');
+                var $controllable = $('<div class="controllable"></div>');
+
+                switch (module.options.controlType) {
+                    case 'CONTROL_TYPE_TOGGLE':
+                        $('<button class="less">-</button>').data('target-value', module.options.value - 25).appendTo($controllable);
+                        $('<button class="toggle">Toggle</button>').data('target-value', module.options.previousValue).appendTo($controllable);
+                        $('<button class="more">+</button>').data('target-value', module.options.value + 25).appendTo($controllable);
+
+
+                        $('button', $controllable)
+                            .click(function(e){
+                                couch.send({action: 'MODULE_COMMAND', id: module.id, data: [$(this).data('target-value')]});
+                            });
+                        break;
+
+                    default:
+                        console.warn('unable to handle module control type "' + module.options.controlType + '"');
+                }
+
+                $module.append($controllable).appendTo($moduleBox);
             });
 
         });
     })
-    .on('UPDATE', function(data){
-        switch (data.component) {
+    .on('UPDATE', function(update){
+        //console.log(update);
+        switch (update.component) {
             case 'SENSOR':
-                var $targetItem = $('#sensor_' + data.target);
-                $targetItem.find('.value').html(data.data.value);
+                $targetItem = $('#sensor_' + update.target);
+                $targetItem.find('.value').html(update.data.value);
                 break;
 
+            case 'MODULE':
+                var module = modules[update.target];
+                module.options = update.options;
+
+                $targetItem = $('#module_' + module.id);
+                $targetItem.find('.value').html(module.options.value);
+                $targetItem.find('.less').data('target-value', module.options.value - 25);
+                $targetItem.find('.toggle').data('target-value', module.options.nextValue);
+                $targetItem.find('.more').data('target-value', module.options.value + 25);
+                break;
+
+
             default:
-                console.warn('unable to handle update component "' + data.component + '"');
+                console.warn('unable to handle update component "' + update.component + '"');
                 break;
         }
+        var $targetItem;
     });

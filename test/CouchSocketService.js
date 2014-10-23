@@ -17,7 +17,6 @@
 
         // message handling
         this.socket.onmessage = function (message) {
-            console.log(message);
             var data = JSON.parse(message.data);
             if (data.type && self.handler[data.type]) {
                 self.handler[data.type](data, message);
