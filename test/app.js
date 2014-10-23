@@ -32,7 +32,10 @@ couch
 
                         $('button', $controllable)
                             .click(function(e){
-                                couch.send({action: 'MODULE_COMMAND', id: module.id, data: [$(this).data('target-value')]});
+                                var value = $(this).data('target-value');
+                                if (value != module.options.value) {
+                                    couch.send({action: 'MODULE_COMMAND', id: module.id, data: [value]});
+                                }
                             });
                         break;
 
